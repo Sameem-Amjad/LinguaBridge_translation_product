@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, useScroll, useSpring, useInView, AnimatePresence } from 'framer-motion';
+import { animateScroll } from 'react-scroll';
 import {
   Globe, FileText, Globe2, Mic, Video, FileBadge,
   Briefcase, CheckCircle2, Star, Mail, Phone, MapPin,
@@ -16,6 +17,17 @@ const seededUnit = (index: number, salt: number): number => {
 
 const unitRange = (index: number, salt: number, min: number, max: number): number => {
   return min + seededUnit(index, salt) * (max - min);
+};
+
+const smoothScrollTo = (id: string, offset = 0) => {
+  const el = document.getElementById(id);
+  if (!el) return;
+
+  const top = el.getBoundingClientRect().top + window.scrollY + offset;
+  animateScroll.scrollTo(top, {
+    duration: 700,
+    smooth: 'easeInOutCubic'
+  });
 };
 
 // ==========================================
@@ -316,10 +328,7 @@ const Navbar = () => {
 
   const scrollTo = (id: string) => {
     setMobileMenuOpen(false);
-    const el = document.getElementById(id);
-    if (el) {
-      window.scrollTo({ top: el.offsetTop - 80, behavior: 'smooth' });
-    }
+    smoothScrollTo(id, -80);
   };
 
   return (
@@ -504,13 +513,13 @@ const Hero = () => {
             transition={{ delay: 3, duration: 0.8 }}
           >
             <button
-              onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
+              onClick={() => smoothScrollTo('contact', -80)}
               className="px-8 py-4 bg-gradient-to-r from-[#00BFA6] to-[#1E3A5F] rounded-full font-semibold text-white shadow-[0_4px_20px_rgba(0,191,166,0.4)] hover:shadow-[0_4px_30px_rgba(0,191,166,0.6)] transition-all transform hover:-translate-y-1"
             >
               Get Free Quote
             </button>
             <button
-              onClick={() => document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' })}
+              onClick={() => smoothScrollTo('services', -80)}
               className="px-8 py-4 border-2 border-white/20 hover:border-[#00BFA6] bg-white/5 backdrop-blur-sm rounded-full font-semibold text-white transition-all transform hover:-translate-y-1 relative overflow-hidden group"
             >
               <span className="relative z-10">Our Services</span>
@@ -564,7 +573,7 @@ const Hero = () => {
         className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-gray-400 cursor-pointer"
         animate={{ y: [0, 10, 0] }}
         transition={{ duration: 2, repeat: Infinity }}
-        onClick={() => document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' })}
+        onClick={() => smoothScrollTo('services', -80)}
       >
         <span className="text-xs tracking-widest uppercase">Scroll</span>
         <ArrowDown className="w-4 h-4" />
@@ -1253,7 +1262,7 @@ const Footer = () => {
 
       {/* Back to top */}
       <button
-        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        onClick={() => animateScroll.scrollToTop({ duration: 700, smooth: 'easeInOutCubic' })}
         className="fixed bottom-8 right-8 w-12 h-12 bg-[#1E3A5F] border border-white/10 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-[#00BFA6] hover:-translate-y-2 transition-all z-50 group"
       >
         <ArrowDown className="w-5 h-5 rotate-180 group-hover:scale-110 transition-transform" />
