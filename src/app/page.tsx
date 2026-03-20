@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, useScroll, useSpring, useInView, AnimatePresence } from 'framer-motion';
-import { animateScroll } from 'react-scroll';
 import {
   Globe, FileText, Globe2, Mic, Video, FileBadge,
   Briefcase, CheckCircle2, Star, Mail, Phone, MapPin,
@@ -24,9 +23,9 @@ const smoothScrollTo = (id: string, offset = 0) => {
   if (!el) return;
 
   const top = el.getBoundingClientRect().top + window.scrollY + offset;
-  animateScroll.scrollTo(top, {
-    duration: 700,
-    smooth: 'easeInOutCubic'
+  window.scrollTo({
+    top,
+    behavior: 'smooth'
   });
 };
 
@@ -51,6 +50,10 @@ const GlobalStyles = () => (
       color: white;
       overflow-x: hidden;
       cursor: none; /* Hide default cursor for custom one */
+    }
+
+    html {
+      scroll-behavior: smooth;
     }
 
     h1, h2, h3, h4, h5, h6, .font-playfair {
@@ -1262,7 +1265,7 @@ const Footer = () => {
 
       {/* Back to top */}
       <button
-        onClick={() => animateScroll.scrollToTop({ duration: 700, smooth: 'easeInOutCubic' })}
+        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
         className="fixed bottom-8 right-8 w-12 h-12 bg-[#1E3A5F] border border-white/10 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-[#00BFA6] hover:-translate-y-2 transition-all z-50 group"
       >
         <ArrowDown className="w-5 h-5 rotate-180 group-hover:scale-110 transition-transform" />
