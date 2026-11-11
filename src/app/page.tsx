@@ -991,7 +991,7 @@ const InputWrapper = ({
     {!children && (
       <label
         htmlFor={name}
-        className={`absolute left-0 transition-all duration-300 pointer-events-none ${focusedInput === name ? '-top-3 text-xs text-[#00BFA6]' : 'top-3 text-gray-400 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-focus:-top-3 peer-focus:text-xs peer-focus:text-[#00BFA6]'
+        className={`absolute left-0 transition-all duration-300 pointer-events-none ${focusedInput === name ? '-top-3 text-xs text-[#00BFA6]' : '-top-3 text-xs text-gray-400 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-focus:-top-3 peer-focus:text-xs peer-focus:text-[#00BFA6]'
           }`}
       >
         {label}
