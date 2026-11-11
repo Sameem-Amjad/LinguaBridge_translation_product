@@ -214,12 +214,13 @@ const useTypewriter = (text: string, speed = 50, delay = 1000) => {
 const CustomCursor = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isHovering, setIsHovering] = useState(false);
-  // Hidden until the mouse first moves, so touch screens never show a ring
-  // parked in the top-left corner.
+  // Shown only once a real mouse moves: touch screens fire mouse events on a
+  // tap too, so pointer events are used to tell a mouse from a finger.
   const [hasMouse, setHasMouse] = useState(false);
 
   useEffect(() => {
-    const updateMousePosition = (e: MouseEvent) => {
+    const updateMousePosition = (e: PointerEvent) => {
+      if (e.pointerType !== 'mouse') return;
       setMousePosition({ x: e.clientX, y: e.clientY });
       setHasMouse(true);
     };
@@ -233,10 +234,10 @@ const CustomCursor = () => {
       }
     };
 
-    window.addEventListener("mousemove", updateMousePosition);
+    window.addEventListener("pointermove", updateMousePosition);
     window.addEventListener("mouseover", handleMouseOver);
     return () => {
-      window.removeEventListener("mousemove", updateMousePosition);
+      window.removeEventListener("pointermove", updateMousePosition);
       window.removeEventListener("mouseover", handleMouseOver);
     };
   }, []);
