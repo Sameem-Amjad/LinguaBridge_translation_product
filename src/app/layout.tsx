@@ -13,8 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lingua Bridge",
-  description: "Translation Marketing Agency",
+  title: "LinguaBridge | Professional translation in 50+ languages",
+  description:
+    "Document translation, website localization, interpretation, subtitles and certified translation, with a free quote within the hour.",
 };
 
 export default function RootLayout({

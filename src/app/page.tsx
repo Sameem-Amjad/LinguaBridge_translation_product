@@ -29,6 +29,14 @@ const smoothScrollTo = (id: string, offset = 0) => {
   });
 };
 
+// Every "get in touch" button lands on the contact form; service buttons also
+// pre-select the matching service type there.
+const SERVICE_EVENT = 'lingua:service';
+const goToContact = (service?: string) => {
+  if (service) window.dispatchEvent(new CustomEvent(SERVICE_EVENT, { detail: service }));
+  smoothScrollTo('contact', -80);
+};
+
 // ==========================================
 // 1. GLOBAL STYLES & CSS ANIMATIONS
 // ==========================================
@@ -49,7 +57,11 @@ const GlobalStyles = () => (
       background-color: var(--dark-navy);
       color: white;
       overflow-x: hidden;
-      cursor: none; /* Hide default cursor for custom one */
+    }
+
+    /* Hide the default cursor for the custom one, only where there is a mouse */
+    @media (hover: hover) and (pointer: fine) {
+      body { cursor: none; }
     }
 
     html {
@@ -175,8 +187,10 @@ const useTypewriter = (text: string, speed = 50, delay = 1000) => {
       setIsTyping(true);
       timer = setInterval(() => {
         if (i < text.length) {
-          setDisplayedText((prev) => prev + text.charAt(i));
+          // Slice instead of appending: the updater would read `i` after the
+          // increment below and drop the first character.
           i++;
+          setDisplayedText(text.slice(0, i));
         } else {
           clearInterval(timer);
           setIsTyping(false);
@@ -200,10 +214,14 @@ const useTypewriter = (text: string, speed = 50, delay = 1000) => {
 const CustomCursor = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isHovering, setIsHovering] = useState(false);
+  // Hidden until the mouse first moves, so touch screens never show a ring
+  // parked in the top-left corner.
+  const [hasMouse, setHasMouse] = useState(false);
 
   useEffect(() => {
     const updateMousePosition = (e: MouseEvent) => {
       setMousePosition({ x: e.clientX, y: e.clientY });
+      setHasMouse(true);
     };
 
     const handleMouseOver = (e: MouseEvent) => {
@@ -222,6 +240,8 @@ const CustomCursor = () => {
       window.removeEventListener("mouseover", handleMouseOver);
     };
   }, []);
+
+  if (!hasMouse) return null;
 
   return (
     <motion.div
@@ -387,6 +407,9 @@ const Navbar = () => {
 
         {/* Mobile Toggle */}
         <button
+          type="button"
+          aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={mobileMenuOpen}
           className="md:hidden text-white"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
         >
@@ -573,7 +596,7 @@ const Hero = () => {
 
       {/* Scroll Down Indicator */}
       <motion.div
-        className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-gray-400 cursor-pointer"
+        className="absolute bottom-10 left-1/2 -translate-x-1/2 hidden lg:flex flex-col items-center gap-2 text-gray-400 cursor-pointer"
         animate={{ y: [0, 10, 0] }}
         transition={{ duration: 2, repeat: Infinity }}
         onClick={() => smoothScrollTo('services', -80)}
@@ -587,12 +610,12 @@ const Hero = () => {
 
 const Services = () => {
   const services = [
-    { icon: FileText, title: "Document Translation", desc: "Legal, medical, technical, and academic documents translated with precision." },
-    { icon: Globe, title: "Website Localization", desc: "Adapt your digital presence for global audiences, respecting cultural nuances." },
-    { icon: Mic, title: "Interpretation Services", desc: "Real-time consecutive and simultaneous interpretation for meetings & events." },
-    { icon: Video, title: "Media & Subtitles", desc: "Video, audio transcription, and culturally accurate subtitle translation." },
-    { icon: FileBadge, title: "Certified Translation", desc: "Official certified translations guaranteed for immigration and legal entities." },
-    { icon: Briefcase, title: "Business Translation", desc: "Contracts, business proposals, and internal corporate communications." },
+    { icon: FileText, title: "Document Translation", type: "Document", desc: "Legal, medical, technical, and academic documents translated with precision." },
+    { icon: Globe, title: "Website Localization", type: "Website", desc: "Adapt your digital presence for global audiences, respecting cultural nuances." },
+    { icon: Mic, title: "Interpretation Services", type: "Interpretation", desc: "Real-time consecutive and simultaneous interpretation for meetings & events." },
+    { icon: Video, title: "Media & Subtitles", type: "Media & Subtitles", desc: "Video, audio transcription, and culturally accurate subtitle translation." },
+    { icon: FileBadge, title: "Certified Translation", type: "Certified", desc: "Official certified translations guaranteed for immigration and legal entities." },
+    { icon: Briefcase, title: "Business Translation", type: "Business", desc: "Contracts, business proposals, and internal corporate communications." },
   ];
 
   return (
@@ -629,6 +652,7 @@ const Services = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1, duration: 0.5 }}
+              onClick={() => goToContact(service.type)}
               className="group relative p-8 rounded-2xl bg-white/[0.02] border border-white/10 backdrop-blur-sm hover:bg-white/[0.04] transition-all duration-300 transform preserve-3d hover:-translate-y-2 hover:shadow-[0_15px_30px_-10px_rgba(0,191,166,0.2)] hover:border-[#00BFA6]/30 cursor-pointer"
             >
               <div className="absolute top-0 right-0 w-32 h-32 bg-[#00BFA6] opacity-0 group-hover:opacity-10 rounded-full blur-3xl transition-opacity duration-500" />
@@ -640,10 +664,14 @@ const Services = () => {
               <h3 className="text-xl font-bold font-playfair mb-3">{service.title}</h3>
               <p className="text-gray-400 text-sm leading-relaxed mb-6">{service.desc}</p>
 
-              <div className="flex items-center text-[#FFD166] text-sm font-medium group-hover:text-[#00BFA6] transition-colors">
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); goToContact(service.type); }}
+                className="flex items-center text-[#FFD166] text-sm font-medium group-hover:text-[#00BFA6] transition-colors"
+              >
                 Learn More
                 <ArrowRight className="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform" />
-              </div>
+              </button>
             </motion.div>
           ))}
         </div>
@@ -815,7 +843,7 @@ const Pricing = () => {
                 ))}
               </div>
 
-              <button className={`w-full py-4 rounded-xl font-bold transition-all relative overflow-hidden group ${plan.popular
+              <button type="button" onClick={() => goToContact()} className={`w-full py-4 rounded-xl font-bold transition-all relative overflow-hidden group ${plan.popular
                   ? 'bg-[#00BFA6] text-[#0A1628] hover:shadow-[0_0_20px_rgba(0,191,166,0.5)]'
                   : 'bg-white/5 text-white hover:bg-white/10 border border-white/10'
                 }`}>
@@ -1032,18 +1060,46 @@ const Languages = () => {
   );
 };
 
+const SERVICE_TYPES = ['Document', 'Website', 'Certified', 'Interpretation', 'Media & Subtitles', 'Business'];
+
 const Contact = () => {
   const [formState, setFormState] = useState('idle'); // idle, loading, success, error
   const [focusedInput, setFocusedInput] = useState('');
+  const [serviceType, setServiceType] = useState('');
+  const [files, setFiles] = useState<string[]>([]);
+  const [dragging, setDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // A service card or button elsewhere on the page pre-selects its service here.
+  useEffect(() => {
+    const pick = (e: Event) => {
+      const value = (e as CustomEvent<string>).detail;
+      if (SERVICE_TYPES.includes(value)) setServiceType(value);
+    };
+    window.addEventListener(SERVICE_EVENT, pick);
+    return () => window.removeEventListener(SERVICE_EVENT, pick);
+  }, []);
+
+  const addFiles = (list: FileList | null) => {
+    if (!list) return;
+    const tooBig = Array.from(list).some((f) => f.size > 50 * 1024 * 1024);
+    const names = Array.from(list).filter((f) => f.size <= 50 * 1024 * 1024).map((f) => f.name);
+    setFiles((prev) => Array.from(new Set([...prev, ...names])).slice(0, 5));
+    if (tooBig) {
+      setFormState('error');
+      setTimeout(() => setFormState('idle'), 800);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    // Keep the form now: React clears e.currentTarget once the handler returns.
+    const form = e.currentTarget;
     setFormState('loading');
 
     // Simulate API call
     setTimeout(() => {
       // Basic validation simulation
-      const form = e.currentTarget;
       const formData = new FormData(form);
       const name = String(formData.get('name') ?? '').trim();
       const email = String(formData.get('email') ?? '').trim();
@@ -1053,7 +1109,10 @@ const Contact = () => {
       } else {
         setFormState('success');
         form.reset();
-        setTimeout(() => setFormState('idle'), 3000);
+        setServiceType('');
+        setFiles([]);
+        setFocusedInput('');
+        setTimeout(() => setFormState('idle'), 4000);
       }
     }, 1500);
   };
@@ -1124,8 +1183,8 @@ const Contact = () => {
               <div className="w-20 h-20 bg-[#00BFA6]/20 rounded-full flex items-center justify-center mb-6">
                 <CheckCircle2 className="w-10 h-10 text-[#00BFA6]" />
               </div>
-              <h3 className="text-2xl font-playfair font-bold mb-2">Message Sent!</h3>
-              <p className="text-gray-400">We&apos;ll get back to you shortly.</p>
+              <h3 className="text-2xl font-playfair font-bold mb-2">Thanks, that&apos;s everything we need</h3>
+              <p className="max-w-xs text-center text-gray-400">This preview isn&apos;t connected to an inbox yet, so nothing was sent.</p>
             </motion.div>
           ) : null}
 
@@ -1138,7 +1197,7 @@ const Contact = () => {
 
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div className="relative">
-                <select defaultValue="" className="w-full bg-transparent border-b border-white/20 py-3 text-gray-300 focus:outline-none appearance-none focus:border-[#00BFA6] cursor-pointer">
+                <select name="languages" aria-label="Language pair" defaultValue="" className="w-full bg-transparent border-b border-white/20 py-3 pr-6 text-gray-300 focus:outline-none appearance-none focus:border-[#00BFA6] cursor-pointer">
                   <option value="" disabled>Language Pair</option>
                   <option className="bg-[#0A1628] text-white">English → Spanish</option>
                   <option className="bg-[#0A1628] text-white">English → French</option>
@@ -1148,12 +1207,17 @@ const Contact = () => {
                 <ArrowDown className="absolute right-0 top-4 w-4 h-4 text-gray-500 pointer-events-none" />
               </div>
               <div className="relative">
-                <select defaultValue="" className="w-full bg-transparent border-b border-white/20 py-3 text-gray-300 focus:outline-none appearance-none focus:border-[#00BFA6] cursor-pointer">
+                <select
+                  name="service"
+                  aria-label="Service type"
+                  value={serviceType}
+                  onChange={(e) => setServiceType(e.target.value)}
+                  className={`w-full bg-transparent border-b py-3 pr-6 focus:outline-none appearance-none focus:border-[#00BFA6] cursor-pointer transition-colors ${serviceType ? 'border-[#00BFA6] text-white' : 'border-white/20 text-gray-300'}`}
+                >
                   <option value="" disabled>Service Type</option>
-                  <option className="bg-[#0A1628] text-white">Document</option>
-                  <option className="bg-[#0A1628] text-white">Website</option>
-                  <option className="bg-[#0A1628] text-white">Certified</option>
-                  <option className="bg-[#0A1628] text-white">Interpretation</option>
+                  {SERVICE_TYPES.map((type) => (
+                    <option key={type} value={type} className="bg-[#0A1628] text-white">{type}</option>
+                  ))}
                 </select>
                 <ArrowDown className="absolute right-0 top-4 w-4 h-4 text-gray-500 pointer-events-none" />
               </div>
@@ -1169,9 +1233,33 @@ const Contact = () => {
               ></textarea>
             </InputWrapper>
 
-            <div className="mb-8 border-2 border-dashed border-white/20 rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-[#00BFA6]/50 hover:bg-white/5 transition-colors cursor-pointer group">
+            <div
+              role="button"
+              tabIndex={0}
+              aria-label="Attach files"
+              onClick={() => fileInputRef.current?.click()}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInputRef.current?.click(); } }}
+              onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={(e) => { e.preventDefault(); setDragging(false); addFiles(e.dataTransfer.files); }}
+              className={`mb-8 border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-[#00BFA6]/50 hover:bg-white/5 transition-colors cursor-pointer group ${dragging ? 'border-[#00BFA6] bg-white/5' : 'border-white/20'}`}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                name="files"
+                multiple
+                className="hidden"
+                onChange={(e) => { addFiles(e.target.files); e.target.value = ''; }}
+              />
               <UploadCloud className="w-8 h-8 text-gray-400 group-hover:text-[#00BFA6] mb-2 transition-colors" />
-              <p className="text-sm text-gray-300">Drag & drop files here or <span className="text-[#00BFA6]">browse</span></p>
+              {files.length ? (
+                <ul className="text-sm text-white space-y-1" data-testid="file-list">
+                  {files.map((f) => <li key={f} className="break-all">{f}</li>)}
+                </ul>
+              ) : (
+                <p className="text-sm text-gray-300">Drag & drop files here or <span className="text-[#00BFA6]">browse</span></p>
+              )}
               <p className="text-xs text-gray-500 mt-1">Max file size 50MB</p>
             </div>
 
@@ -1196,7 +1284,33 @@ const Contact = () => {
   );
 };
 
+const QUICK_LINKS = [
+  { label: 'Home', id: 'home' },
+  { label: 'Services', id: 'services' },
+  { label: 'How It Works', id: 'how-it-works' },
+  { label: 'Pricing', id: 'pricing' },
+  { label: 'Testimonials', id: 'testimonials' },
+];
+
+const FOOTER_SERVICES = [
+  { label: 'Document Translation', type: 'Document' },
+  { label: 'Website Localization', type: 'Website' },
+  { label: 'Interpretation', type: 'Interpretation' },
+  { label: 'Media Subtitles', type: 'Media & Subtitles' },
+  { label: 'Certified Translation', type: 'Certified' },
+];
+
 const Footer = () => {
+  const [subscribed, setSubscribed] = useState(false);
+  const [showTop, setShowTop] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setShowTop(window.scrollY > 600);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   return (
     <footer className="bg-[#050B14] pt-20 pb-8 relative z-10 border-t border-white/5">
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
@@ -1222,8 +1336,16 @@ const Footer = () => {
         <div>
           <h4 className="font-bold mb-6 text-white">Quick Links</h4>
           <ul className="space-y-3 text-sm text-gray-400">
-            {['Home', 'About Us', 'How It Works', 'Pricing', 'Testimonials'].map(link => (
-              <li key={link}><a href="#" className="hover:text-[#00BFA6] transition-colors">{link}</a></li>
+            {QUICK_LINKS.map(link => (
+              <li key={link.id}>
+                <a
+                  href={`#${link.id}`}
+                  onClick={(e) => { e.preventDefault(); smoothScrollTo(link.id, link.id === 'home' ? -200 : -80); }}
+                  className="hover:text-[#00BFA6] transition-colors"
+                >
+                  {link.label}
+                </a>
+              </li>
             ))}
           </ul>
         </div>
@@ -1232,8 +1354,16 @@ const Footer = () => {
         <div>
           <h4 className="font-bold mb-6 text-white">Services</h4>
           <ul className="space-y-3 text-sm text-gray-400">
-            {['Document Translation', 'Website Localization', 'Interpretation', 'Media Subtitles', 'Certified Translation'].map(link => (
-              <li key={link}><a href="#" className="hover:text-[#00BFA6] transition-colors">{link}</a></li>
+            {FOOTER_SERVICES.map(link => (
+              <li key={link.label}>
+                <a
+                  href="#contact"
+                  onClick={(e) => { e.preventDefault(); goToContact(link.type); }}
+                  className="hover:text-[#00BFA6] transition-colors"
+                >
+                  {link.label}
+                </a>
+              </li>
             ))}
           </ul>
         </div>
@@ -1242,16 +1372,28 @@ const Footer = () => {
         <div>
           <h4 className="font-bold mb-6 text-white">Newsletter</h4>
           <p className="text-sm text-gray-400 mb-4">Subscribe to get translation tips and global business insights.</p>
-          <div className="flex bg-white/5 rounded-lg overflow-hidden border border-white/10 focus-within:border-[#00BFA6] transition-colors">
-            <input
-              type="email"
-              placeholder="Email address"
-              className="bg-transparent px-4 py-3 w-full text-sm focus:outline-none text-white"
-            />
-            <button className="bg-[#00BFA6] px-4 py-3 text-[#0A1628] font-bold hover:bg-[#FFD166] transition-colors">
-              <ArrowRight className="w-5 h-5" />
-            </button>
-          </div>
+          {subscribed ? (
+            <p className="text-sm text-[#00BFA6]" role="status">
+              Thanks for subscribing. This preview doesn&apos;t store emails yet.
+            </p>
+          ) : (
+            <form
+              onSubmit={(e) => { e.preventDefault(); setSubscribed(true); }}
+              className="flex bg-white/5 rounded-lg overflow-hidden border border-white/10 focus-within:border-[#00BFA6] transition-colors"
+            >
+              <input
+                type="email"
+                name="newsletter"
+                required
+                aria-label="Email address"
+                placeholder="Email address"
+                className="bg-transparent px-4 py-3 w-full text-sm focus:outline-none text-white"
+              />
+              <button type="submit" aria-label="Subscribe" className="bg-[#00BFA6] px-4 py-3 text-[#0A1628] font-bold hover:bg-[#FFD166] transition-colors">
+                <ArrowRight className="w-5 h-5" />
+              </button>
+            </form>
+          )}
         </div>
       </div>
 
@@ -1265,8 +1407,10 @@ const Footer = () => {
 
       {/* Back to top */}
       <button
+        type="button"
+        aria-label="Back to top"
         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        className="fixed bottom-8 right-8 w-12 h-12 bg-[#1E3A5F] border border-white/10 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-[#00BFA6] hover:-translate-y-2 transition-all z-50 group"
+        className={`fixed bottom-6 right-6 md:bottom-8 md:right-8 w-12 h-12 bg-[#1E3A5F] border border-white/10 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-[#00BFA6] hover:-translate-y-2 transition-all z-50 group ${showTop ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
       >
         <ArrowDown className="w-5 h-5 rotate-180 group-hover:scale-110 transition-transform" />
       </button>
